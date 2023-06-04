@@ -1,0 +1,10 @@
+---
+title: "Home-Credit EDA"
+output: html_notebook
+---
+Import EDA packages
+```{r}
+library(tidyverse)
+
+```
+
