@@ -2,9 +2,41 @@
 title: "Home-Credit EDA"
 output: html_notebook
 ---
-Import EDA packages
+Setup
 ```{r}
 library(tidyverse)
+training_data <- read.csv('application_train.csv')
+```
+```{r}
+print(mean(training_data$TARGET)) 
+
+training_data %>%
+   filter(AMT_INCOME_TOTAL < 117000000) %>%
+   ggplot(aes(as.factor(TARGET),AMT_INCOME_TOTAL)) + geom_boxplot()
+
+training_data %>%
+        select(TARGET, AMT_INCOME_TOTAL) %>%
+        group_by(as.factor(TARGET)) %>%
+        summarise(median(AMT_INCOME_TOTAL))
+
+delinquint_annuity <- training_data %>%
+  select(TARGET, AMT_ANNUITY) %>%
+  filter(TARGET == 1) %>%
+  summarize(sum(AMT_ANNUITY))
+  
+total_annuity <- training_data %>%
+  select(AMT_ANNUITY) %>%
+  na.omit() %>%
+  summarize(sum(AMT_ANNUITY))
+
+sum(as.numeric(training_data$AMT_ANNUITY))
+
+print(total_annuity)
+  
+print(delinquint_annuity)
 
 ```
+
+
+
 
