@@ -1,19 +1,59 @@
 ---
-title: "Home-Credit EDA"
+title: "Home-Credit EDA Workbook"
 output: html_notebook
 ---
-Setup
-```{r}
+
+```{r, ECHO=FALSE, results=FALSE}
+#import packages here
 library(tidyverse)
-training_data <- read.csv('application_train.csv')
+
+
 ```
-```{r}
+
+```{r data setup}
+#this block imports all datasets except the test set for EDA purposes.
+#NOTE - you must have the csv files saved within your locla github folder. Git will not sync them.
+
+#this is the primary dataset, it contains the target variable
+training_data <- read.csv('application_train.csv')
+
+#dataset with all clients' previous credits.
+bureau <- read.csv('bureau.csv')
+
+#dataset with monthly balances of previous credits from Credit Bureau
+#NOTE - joins on credit institution
+#bureau_balance <- read.csv('bureau_balance.csv') 
+
+#monthly balance of client's previous loans, behavioral data
+cash_balance <- read.csv('POS_CASH_balance.csv')
+
+#application information from previous loans
+previous_applicants <- read.csv('previous_application.csv')
+
+#installment payment info for previous loan holders
+#installment_payments <- read.csv('installments_payments.csv')
+
+#data set with clients' credit card balances
+#credit_card_balance <- read.csv('credit_card_balance.csv')
+
+
+```
+
+Questions/observations:
+1) Home Credit operates in multiple countries. Are all the financial data tied to a singular currency (exchange rate)?
+2) Delinquincy (target) rates appear to be higher in lower-income borrowers.
+
+```{r understanding target variable}
+#8% of popultion is identified as the target (delinquent/payment hardships)
 print(mean(training_data$TARGET)) 
 
+#income boxplot comparing monthly income and delinquency (target)
+#NOTE: there is on outlier value of $117,000,000. This is possibly a typo as it skews the rest of the set.
 training_data %>%
    filter(AMT_INCOME_TOTAL < 117000000) %>%
    ggplot(aes(as.factor(TARGET),AMT_INCOME_TOTAL)) + geom_boxplot()
 
+#generates table with delinquincy status by median income. Target borrowers appear to have lower median incomes ($135000 instead of $148,500)
 training_data %>%
         select(TARGET, AMT_INCOME_TOTAL) %>%
         group_by(as.factor(TARGET)) %>%
@@ -37,6 +77,16 @@ print(delinquint_annuity)
 
 ```
 
+
+```{r joining tables}
+#joining tables -- target & bureau tables
+target_bureau <- merge(training_data, bureau, by="SK_ID_CURR")
+
+target_bureau %>%
+   ggplot(aes(as.factor(TARGET), AMT_CREDIT_SUM)) + geom_boxplot()
+
+
+```
 
 
 
