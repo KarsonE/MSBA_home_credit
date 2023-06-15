@@ -41,7 +41,7 @@ previous_applicants <- read.csv('previous_application.csv')
 
 ```
 
-Questions/observations:
+<h2>Questions/observations</h2>
 1) Home Credit operates in multiple countries. Are all the financial data tied to a singular currency (exchange rate)?
 2) Delinquincy (target) rates appear to be higher in lower-income borrowers.
 
@@ -60,22 +60,6 @@ training_data %>%
         select(TARGET, AMT_INCOME_TOTAL) %>%
         group_by(as.factor(TARGET)) %>%
         summarise(median(AMT_INCOME_TOTAL))
-
-delinquint_annuity <- training_data %>%
-  select(TARGET, AMT_ANNUITY) %>%
-  filter(TARGET == 1) %>%
-  summarize(sum(AMT_ANNUITY))
-  
-total_annuity <- training_data %>%
-  select(AMT_ANNUITY) %>%
-  na.omit() %>%
-  summarize(sum(AMT_ANNUITY))
-
-sum(as.numeric(training_data$AMT_ANNUITY))
-
-print(total_annuity)
-  
-print(delinquint_annuity)
 
 ```
 
@@ -123,6 +107,7 @@ for (i in 1:ncol(training_data)) {
 
 ```
 
+<h2> Examining three features </h2>
 There are a few features that intuitively jump out as mechanically affecting a creditor's ability to make timely payments. Those include:
 <ul>
 <li> Income amount (AMT_INCOME_TOTAL) </li>
@@ -132,28 +117,25 @@ There are a few features that intuitively jump out as mechanically affecting a c
 
 Let's take a quick look at these three variables. They all have low or no counts of NA values.
 
-```{r loan information}
+```{r income}
 ##Income
 summary(training_data$AMT_INCOME_TOTAL) #There's a major anomaly on the higher end. That may be a data entry error or on individual, let's take a look at the histogram
 
 plot(training_data$AMT_INCOME_TOTAL, ylab = "Incomes") #The large income is visible on this chart, and there appear to be a few smaller but still relatively large incomes.
+```
 
+```{r credit amounts}
 ##Credit amounts
 summary(training_data$AMT_CREDIT) #The Max value may be an anomaly as it's significantly higher than the 3rd quartile value. Perhaps it belongs to the wealthy individual identified in the previous feature?
 
 ggplot(training_data, aes(x = AMT_CREDIT)) + geom_histogram(bins = 100) #The data appears to skew left
+```
 
-
+```{r regression model}
 ##Annuity payments
 summary(training_data$AMT_ANNUITY) #caution: there are 12 nas in this feature
 
 ggplot(training_data, aes(x = AMT_ANNUITY)) + geom_histogram() #distribution looks more normal, slight right tail.
-
-
-##regression model suggests that credit and annuity are both statistically significant features. Model has poor predictive power overall.
-model1 <- lm(TARGET~AMT_CREDIT + AMT_ANNUITY + AMT_INCOME_TOTAL, training_data)
-summary(model1)
-
 ```
 
 
