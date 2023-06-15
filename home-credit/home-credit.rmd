@@ -9,6 +9,8 @@ library(tidyverse)
 
 
 ```
+<h1> Business Problem Statement </h1>
+
 
 ```{r data setup}
 #this block imports all datasets except the test set for EDA purposes.
@@ -85,8 +87,73 @@ target_bureau <- merge(training_data, bureau, by="SK_ID_CURR")
 target_bureau %>%
    ggplot(aes(as.factor(TARGET), AMT_CREDIT_SUM)) + geom_boxplot()
 
+```
+
+
+```{r explanatory variables}
+#generates a summary of all variables in training data set
+summary(training_data)
+
+
+# generates summary of occupation types, there appears to be many nas.
+training_data %>%
+  mutate(OCCUPATION_TYPE = as.factor(OCCUPATION_TYPE)) %>%
+  select(OCCUPATION_TYPE) %>%
+  summary()
+
+sum(is.na(training_data$TOTALAREA_MODE))
+
+#Total number of NAs in each column in the training data set
+table(colSums(is.na(training_data)))
+
+
+#For loop describes number of na values in each feature
+column_names = list()
+num_nas = list()
+
+for (i in 1:ncol(training_data)) {
+  if (sum(is.na(training_data[,i])) > 0)
+    {
+    print(paste("THERE ARE",sum(is.na(training_data[,i])),"NA VALUES:", colnames(training_data[i])))
+  }
+  else {
+    print(paste("There are no NA values in", colnames(training_data[i])))
+  }
+}
 
 ```
 
+There are a few features that intuitively jump out as mechanically affecting a creditor's ability to make timely payments. Those include:
+<ul>
+<li> Income amount (AMT_INCOME_TOTAL) </li>
+<li> Credit amount (AMT_CREDIT) </li>
+<li> Annuity payments (AMT_ANNUITY)
+</ul>
+
+Let's take a quick look at these three variables. They all have low or no counts of NA values.
+
+```{r loan information}
+##Income
+summary(training_data$AMT_INCOME_TOTAL) #There's a major anomaly on the higher end. That may be a data entry error or on individual, let's take a look at the histogram
+
+plot(training_data$AMT_INCOME_TOTAL, ylab = "Incomes") #The large income is visible on this chart, and there appear to be a few smaller but still relatively large incomes.
+
+##Credit amounts
+summary(training_data$AMT_CREDIT) #The Max value may be an anomaly as it's significantly higher than the 3rd quartile value. Perhaps it belongs to the wealthy individual identified in the previous feature?
+
+ggplot(training_data, aes(x = AMT_CREDIT)) + geom_histogram(bins = 100) #The data appears to skew left
+
+
+##Annuity payments
+summary(training_data$AMT_ANNUITY) #caution: there are 12 nas in this feature
+
+ggplot(training_data, aes(x = AMT_ANNUITY)) + geom_histogram() #distribution looks more normal, slight right tail.
+
+
+##regression model suggests that credit and annuity are both statistically significant features. Model has poor predictive power overall.
+model1 <- lm(TARGET~AMT_CREDIT + AMT_ANNUITY + AMT_INCOME_TOTAL, training_data)
+summary(model1)
+
+```
 
 
