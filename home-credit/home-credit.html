@@ -714,51 +714,15 @@ for (i in 1:ncol(training_data)) {
     {
     print(paste(&quot;THERE ARE&quot;,sum(is.na(training_data[,i])),&quot;NA VALUES:&quot;, colnames(training_data[i])))
   }
-  else {
-    print(paste(&quot;There are no NA values in&quot;, colnames(training_data[i])))
-  }
+#surpressed for readability...
+#  else { 
+#    print(paste(&quot;There are no NA values in&quot;, colnames(training_data[i])))
+#  }
 }</code></pre>
-<pre><code>## [1] &quot;There are no NA values in SK_ID_CURR&quot;
-## [1] &quot;There are no NA values in TARGET&quot;
-## [1] &quot;There are no NA values in NAME_CONTRACT_TYPE&quot;
-## [1] &quot;There are no NA values in CODE_GENDER&quot;
-## [1] &quot;There are no NA values in FLAG_OWN_CAR&quot;
-## [1] &quot;There are no NA values in FLAG_OWN_REALTY&quot;
-## [1] &quot;There are no NA values in CNT_CHILDREN&quot;
-## [1] &quot;There are no NA values in AMT_INCOME_TOTAL&quot;
-## [1] &quot;There are no NA values in AMT_CREDIT&quot;
-## [1] &quot;THERE ARE 12 NA VALUES: AMT_ANNUITY&quot;
+<pre><code>## [1] &quot;THERE ARE 12 NA VALUES: AMT_ANNUITY&quot;
 ## [1] &quot;THERE ARE 278 NA VALUES: AMT_GOODS_PRICE&quot;
-## [1] &quot;There are no NA values in NAME_TYPE_SUITE&quot;
-## [1] &quot;There are no NA values in NAME_INCOME_TYPE&quot;
-## [1] &quot;There are no NA values in NAME_EDUCATION_TYPE&quot;
-## [1] &quot;There are no NA values in NAME_FAMILY_STATUS&quot;
-## [1] &quot;There are no NA values in NAME_HOUSING_TYPE&quot;
-## [1] &quot;There are no NA values in REGION_POPULATION_RELATIVE&quot;
-## [1] &quot;There are no NA values in DAYS_BIRTH&quot;
-## [1] &quot;There are no NA values in DAYS_EMPLOYED&quot;
-## [1] &quot;There are no NA values in DAYS_REGISTRATION&quot;
-## [1] &quot;There are no NA values in DAYS_ID_PUBLISH&quot;
 ## [1] &quot;THERE ARE 202929 NA VALUES: OWN_CAR_AGE&quot;
-## [1] &quot;There are no NA values in FLAG_MOBIL&quot;
-## [1] &quot;There are no NA values in FLAG_EMP_PHONE&quot;
-## [1] &quot;There are no NA values in FLAG_WORK_PHONE&quot;
-## [1] &quot;There are no NA values in FLAG_CONT_MOBILE&quot;
-## [1] &quot;There are no NA values in FLAG_PHONE&quot;
-## [1] &quot;There are no NA values in FLAG_EMAIL&quot;
-## [1] &quot;There are no NA values in OCCUPATION_TYPE&quot;
 ## [1] &quot;THERE ARE 2 NA VALUES: CNT_FAM_MEMBERS&quot;
-## [1] &quot;There are no NA values in REGION_RATING_CLIENT&quot;
-## [1] &quot;There are no NA values in REGION_RATING_CLIENT_W_CITY&quot;
-## [1] &quot;There are no NA values in WEEKDAY_APPR_PROCESS_START&quot;
-## [1] &quot;There are no NA values in HOUR_APPR_PROCESS_START&quot;
-## [1] &quot;There are no NA values in REG_REGION_NOT_LIVE_REGION&quot;
-## [1] &quot;There are no NA values in REG_REGION_NOT_WORK_REGION&quot;
-## [1] &quot;There are no NA values in LIVE_REGION_NOT_WORK_REGION&quot;
-## [1] &quot;There are no NA values in REG_CITY_NOT_LIVE_CITY&quot;
-## [1] &quot;There are no NA values in REG_CITY_NOT_WORK_CITY&quot;
-## [1] &quot;There are no NA values in LIVE_CITY_NOT_WORK_CITY&quot;
-## [1] &quot;There are no NA values in ORGANIZATION_TYPE&quot;
 ## [1] &quot;THERE ARE 173378 NA VALUES: EXT_SOURCE_1&quot;
 ## [1] &quot;THERE ARE 660 NA VALUES: EXT_SOURCE_2&quot;
 ## [1] &quot;THERE ARE 60965 NA VALUES: EXT_SOURCE_3&quot;
@@ -804,36 +768,12 @@ for (i in 1:ncol(training_data)) {
 ## [1] &quot;THERE ARE 154350 NA VALUES: LIVINGAREA_MEDI&quot;
 ## [1] &quot;THERE ARE 213514 NA VALUES: NONLIVINGAPARTMENTS_MEDI&quot;
 ## [1] &quot;THERE ARE 169682 NA VALUES: NONLIVINGAREA_MEDI&quot;
-## [1] &quot;There are no NA values in FONDKAPREMONT_MODE&quot;
-## [1] &quot;There are no NA values in HOUSETYPE_MODE&quot;
 ## [1] &quot;THERE ARE 148431 NA VALUES: TOTALAREA_MODE&quot;
-## [1] &quot;There are no NA values in WALLSMATERIAL_MODE&quot;
-## [1] &quot;There are no NA values in EMERGENCYSTATE_MODE&quot;
 ## [1] &quot;THERE ARE 1021 NA VALUES: OBS_30_CNT_SOCIAL_CIRCLE&quot;
 ## [1] &quot;THERE ARE 1021 NA VALUES: DEF_30_CNT_SOCIAL_CIRCLE&quot;
 ## [1] &quot;THERE ARE 1021 NA VALUES: OBS_60_CNT_SOCIAL_CIRCLE&quot;
 ## [1] &quot;THERE ARE 1021 NA VALUES: DEF_60_CNT_SOCIAL_CIRCLE&quot;
 ## [1] &quot;THERE ARE 1 NA VALUES: DAYS_LAST_PHONE_CHANGE&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_2&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_3&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_4&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_5&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_6&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_7&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_8&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_9&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_10&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_11&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_12&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_13&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_14&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_15&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_16&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_17&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_18&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_19&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_20&quot;
-## [1] &quot;There are no NA values in FLAG_DOCUMENT_21&quot;
 ## [1] &quot;THERE ARE 41519 NA VALUES: AMT_REQ_CREDIT_BUREAU_HOUR&quot;
 ## [1] &quot;THERE ARE 41519 NA VALUES: AMT_REQ_CREDIT_BUREAU_DAY&quot;
 ## [1] &quot;THERE ARE 41519 NA VALUES: AMT_REQ_CREDIT_BUREAU_WEEK&quot;

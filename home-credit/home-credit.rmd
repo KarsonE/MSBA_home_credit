@@ -134,9 +134,10 @@ for (i in 1:ncol(training_data)) {
     {
     print(paste("THERE ARE",sum(is.na(training_data[,i])),"NA VALUES:", colnames(training_data[i])))
   }
-  else {
-    print(paste("There are no NA values in", colnames(training_data[i])))
-  }
+#surpressed for readability...
+#  else { 
+#    print(paste("There are no NA values in", colnames(training_data[i])))
+#  }
 }
 ```
 # Explanatory Variables
