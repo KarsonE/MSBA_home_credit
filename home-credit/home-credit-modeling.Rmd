@@ -1,0 +1,79 @@
+---
+title: "Home Credit EDA Modeling Workbook"
+author: "Group 8: Jade Gosar, Karson Eilers, Paula Soutostefani"
+date: "2023-07-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r packages}
+#load packages
+library(tidyverse)
+library(caret)
+```
+
+
+```{r data import}
+#Imports cleaned training and testing set containing relevant varaibles and no na values
+#see 'data_consolidation_script.R' for full details
+
+#The training set is a product of the application_train.csv set and two values from 
+training_set <- read_csv('clean_training_data.csv')
+testing_set <- read_csv('clean_testing_data.csv')
+
+```
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+
+```
+
+
+
+```{r}
+
+
+```
+
+
+
+```{r}
+
+
+```
+
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+
+```
