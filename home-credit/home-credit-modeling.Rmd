@@ -23,27 +23,100 @@ library(caret)
 
 #The training set is a product of the application_train.csv set and two values from 
 training_set <- read_csv('clean_training_data.csv')
+#note - the cleaned training set has 263,480 observations instead fo the 307511 in the origina file
 testing_set <- read_csv('clean_testing_data.csv')
+#note - the cleaned testing set has 42,299 observations instead of the 48,744
+
+```
+##Observation on cleaning and TARGET value frequency.
+Group 8 is concerned about the effect of cleaning on the already imbalanced target classification. The group set a tolerance threshold of a 10% change in the TARGET variable. If the cleaning resulted in a disproportionate relative increase or decrease in the target variable frequency, the group would reevaluate cleaning methods.
+
+The cleaning methods used resulted in a 4.24% reduction in the TARGET variable, well below the group's threshold. 
+
+```{r Target variable testing}
+## Group note - you don't need to import the raw data back in. We'll just uncomment this in the final submissiont to demonstrate the change percentage in the TARGET variable
+
+#raw_data_train <- read_csv("application_train.csv")
+
+#(mean(raw_data_train$TARGET) - mean(training_set$TARGET))/mean(raw_data_train$TARGET)
 
 ```
 
 
-```{r}
+```{r data formatting}
+#Some of the variables need to be treated as factors for the subsequebnt modeling steps
 
+#Let's filter the characters first
+testing_set %>% mutate(across(where(is.character), as.factor))
+training_set %>% mutate(across(where(is.character), as.factor))
+
+#we should factor the Target variable for classification approaches, too.
+training_set$TARGET <- as.factor(training_set$TARGET)
+
+#DAYS_EMPLOYED and DAYS_CREDIT are both negative values, since they are past date - current date. Let's make them absolute values to be easier to interpret. 
+
+#There appears to be one anomaly in the DAYS_EMPLOYED Values; a very large positive number. 
+training_set %>%
+   ggplot(aes(DAYS_EMPLOYED)) + geom_boxplot()
+
+testing_set %>%
+   ggplot(aes(DAYS_EMPLOYED)) + geom_boxplot()
+
+
+summary(testing_set$DAYS_EMPLOYED)
+summary(training_set$DAYS_EMPLOYED)
+
+#The anomoly occurs in both training and testing. It must be a mis entry as it's impossible to work 365,243 days in a human lifetime. We will remove it from both sets.
+training_set <- training_set %>%
+  filter(DAYS_EMPLOYED <= 0)
+
+summary(training_set$DAYS_EMPLOYED)
+
+testing_set <- testing_set %>%
+  filter(DAYS_EMPLOYED <= 0)
+
+summary(training_set$DAYS_EMPLOYED)
+
+#Now, let's make these values absolute for interpretation.
+training_set$DAYS_EMPLOYED <- abs(training_set$DAYS_EMPLOYED)
+testing_set$DAYS_EMPLOYED <- abs(testing_set$DAYS_EMPLOYED)
+training_set$DAYS_CREDIT <- abs(training_set$DAYS_CREDIT)
+testing_set$DAYS_CREDIT <- abs(testing_set$DAYS_CREDIT)
+
+```
+## Partitions
+We will need to partition the training set into (at least) two partitions - one for training the data and one for testing. We need to test on a training partition before deploying the model to the formal testing set to measure accuracy (testing_set doesn't have the TARGET variable)
+
+This code will partition the training set into two: t_train and t_test. We will set the testing_set aside for now. use that at the end for final model predictions. 
+
+```{r partitions}
+#creates a training subset of the training data with 70% of the data
+t_train_index <- createDataPartition(training_set$TARGET, p = 0.7, list=FALSE)
+
+t_train <- training_set[t_train_index,]
+t_test <- training_set[-t_train_index,]
+
+#check data
+summary(t_train)
+summary(t_test)
+
+#check for relative frequency of Target in t_train and t_test
+t_train %>%
+  group_by(TARGET) %>%
+  summarise(percent = n()/nrow(.))
+
+t_test %>%
+  group_by(TARGET) %>%
+  summarise(percent = n()/nrow(.))
 
 ```
 
 
-```{r}
+Looks like we are set! 
+Note from Karson: I didn't sample to address classification bias or standardize the values with wide variance like income or loan amount. Tweaks like those may improve your model performance, but I wanted to give you both the options to try different approaches. Feel free to modify the data how you see fit. 
+<-------------------START CODING MODELS HERE--------------->
 
 
-```
-
-
-```{r}
-
-
-```
 
 
 
