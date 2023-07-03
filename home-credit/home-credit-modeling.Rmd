@@ -90,6 +90,8 @@ We will need to partition the training set into (at least) two partitions - one 
 This code will partition the training set into two: t_train and t_test. We will set the testing_set aside for now. use that at the end for final model predictions. 
 
 ```{r partitions}
+set.seed(234)
+
 #creates a training subset of the training data with 70% of the data
 t_train_index <- createDataPartition(training_set$TARGET, p = 0.7, list=FALSE)
 
