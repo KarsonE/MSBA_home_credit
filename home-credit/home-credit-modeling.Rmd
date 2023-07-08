@@ -9,13 +9,20 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r packages}
+#install.packages("randomForest")
+#install.packages("rminer")
+
 #load packages
 library(tidyverse)
 library(caret)
+library(nb_models)
 library(naivebayes)
-
+library(readr)
+library(dplyr)
+library(rpart)
+library(rminer)
+library(randomForest)
 ```
 
 
@@ -120,17 +127,56 @@ training_set <- training_set[-c(1)]
 testing_set <- testing_set[-c(1)]
 
 ```
+Changing character columns into factor variables to add as dummy variables into analysis
+
+```{r}
+# Select character columns that contain categorical data to turn into factor variables
+columns <- c("NAME_INCOME_TYPE", "NAME_EDUCATION_TYPE")
+
+# Loop over the columns selected and convert them to factors
+for (column in columns) {
+  training_set[[column]] <- factor(training_set[[column]])
+}
+
+str(training_set)
+```
+
+Create dummy variable for categorical variables
+```{r}
+# create dummy variables for categorical variables
+dummies <- model.matrix(~ NAME_INCOME_TYPE + NAME_EDUCATION_TYPE + 0, data = training_set)
+
+# add the dummy variables to the original data frame
+training_set_w_dummies <- cbind(training_set, dummies)
+
+# rename the dummy variable columns
+colnames(training_set_w_dummies)[12:22] <- c("Bussinessman", "Commercial_Associate", "Maternity_Leave", "Pensioner", "State_Servant", "Student", "Working_Class", "Higher_Education", "Incomplete_Higher_Education", "Lower_Seconday_Education", "Seconday_Secondary_Special")
+
+# check the result
+training_set_w_dummies[,c(6, 9, 12:22)]
+```
+
+Turn Yes/No columns into 1's and 0's to be used in modeling
+```{r}
+training_set_w_dummies$FLAG_OWN_CAR <- as.integer(training_set_w_dummies$FLAG_OWN_CAR == "Y")
+training_set_w_dummies$FLAG_OWN_REALTY <- as.integer(training_set_w_dummies$FLAG_OWN_REALTY == "Y")
+training_set_w_dummies$TARGET <- as.integer(training_set_w_dummies$TARGET == "1")
+```
+
+
 ## Partitions
 We will need to partition the training set into (at least) two partitions - one for training the data and one for testing. We need to test on a training partition before deploying the model to the formal testing set to measure accuracy (testing_set doesn't have the TARGET variable)
 
 This code will partition the training set into two: t_train and t_test. We will set the testing_set aside for now. use that at the end for final model predictions. 
 
 ```{r partitions}
-#creates a training subset of the training data with 70% of the data
-t_train_index <- createDataPartition(training_set$TARGET, p = 0.7, list=FALSE)
+set.seed(234)
 
-t_train <- training_set[t_train_index,]
-t_test <- training_set[-t_train_index,]
+#creates a training subset of the training data with 70% of the data
+t_train_index <- createDataPartition(training_set_w_dummies$TARGET, p = 0.7, list=FALSE)
+
+t_train <- training_set_w_dummies[t_train_index,]
+t_test <- training_set_w_dummies[-t_train_index,]
 
 #check data
 summary(t_train)
@@ -145,7 +191,11 @@ t_test %>%
   group_by(TARGET) %>%
   summarise(percent = n()/nrow(.))
 
+```
 
+```{r upsample_option}
+#up sample target class to address class imbalance
+training_sample <- upSample(t_train, t_train$TARGET)
 
 ```
 
@@ -154,17 +204,66 @@ Looks like we are set!
 Note from Karson: I didn't sample to address classification bias or standardize the values with wide variance like income or loan amount. Tweaks like those may improve your model performance, but I wanted to give you both the options to try different approaches. Feel free to modify the data how you see fit. 
 <-------------------START CODING MODELS HERE--------------->
 
+<-------------------Decision Trees & Random Forest -------------->
+```{r}
+head(t_train)
+head(t_test)
+dim(t_train)
+dim(t_test)
+```
+
+```{r}
+tree_mod <- rpart(TARGET ~.,
+                  data = t_train[-c(1:2, 6, 9)])
+
+tree_mod
+```
+
+```{r}
+rf_mod_default <- randomForest(TARGET ~.,
+                               data = t_train)
+rf_mod_default
+```
+
+```{r}
+#Evaluate performance against the training dataset and then the test dataset
+rf_def_predict_train <- predict(rf_mod_default, t_train)
+mmetric(t_train$TARGET, rf_def_predict_train, metric = "ACC", "TPR", "PRECISION", "F1")
+```
 
 
 ```{r}
-#up sample target class to address class imbalance
-training_sample <- upSample(t_train, t_train$TARGET)
-
+rf_def_predict_test <- predict(rf_mod_default, t_test)
+mmetric(t_test$TARGET, rf_def_predict_test, metric = "ACC", "TPR", "PRECISION", "F1")
 ```
 
-Testing a few nb models out...
 
+Plot Error Rate v Number of Trees in random forest
+```{r}
+oob_error <- rf_mod_default$err.rate[,1]
+plot_dat <- cbind.data.frame(rep(1:length(oob_error)), oob_error)
+names(plot_dat) <- c("trees", "oob_error")
 
+g_1 <- ggplot(plot_dat, aes(x = trees, y = oob_error)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  theme_bw() +
+  geom_smooth() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank()) +
+  labs(title = "Error Rate v Number of Trees", x = "Number of Trees", y = "Error Rate")
+```
+
+```{r}
+rf_mod <- randomForest(TARGET ~.,
+                       data = t_train,
+                       ntree = 500)
+
+rf_mod
+```
+
+<--------------------------Naive Bayes Classification----------------------->
 ```{r nb1}
 #laplace smoothing @ value of 1 (default = 0), laplace smooting helps address zero probability issues
 #Using kernel trick to address issue of dimensionality.
@@ -175,9 +274,7 @@ plot(nb1)
 nb1_predict_class <- predict(nb1, newdata = t_train)
 cm <- confusionMatrix(data = nb1_predict_class, reference = t_train$TARGET) #this works
 print(cm)
-
 ```
-
 
 ```{r nb2}
 
@@ -199,15 +296,11 @@ nb2_predict_class <- predict(nb2, newdata = t_train)
 
 nb2_predict_test <- predict(nb2, newdata = t_test)
 
-
 cm <- confusionMatrix(data = nb2_predict_class, reference = t_train$TARGET)
 cm_test <- confusionMatrix(data <- nb2_predict_test, reference = t_test$TARGET)
 
 print(cm_test)
-
-
 ```
-
 
 ```{r nb3}
 ctrl10x <- trainControl(
@@ -235,4 +328,8 @@ print(cm)
 print(cm_test)
 
 ```
+
+
+
+
 
