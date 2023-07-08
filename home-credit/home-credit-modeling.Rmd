@@ -14,6 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 #load packages
 library(tidyverse)
 library(caret)
+library(naivebayes)
+
 ```
 
 
@@ -47,13 +49,13 @@ The cleaning methods used resulted in a 4.24% reduction in the TARGET variable, 
 #Some of the variables need to be treated as factors for the subsequebnt modeling steps
 
 #Let's filter the characters first
-testing_set %>% mutate(across(where(is.character), as.factor))
-training_set %>% mutate(across(where(is.character), as.factor))
+testing_set <- testing_set %>% mutate(across(where(is.character), as.factor))
+training_set <- training_set %>% mutate(across(where(is.character), as.factor))
 
 #we should factor the Target variable for classification approaches, too.
 training_set$TARGET <- as.factor(training_set$TARGET)
 
-#DAYS_EMPLOYED and DAYS_CREDIT are both negative values, since they are past date - current date. Let's make them absolute values to be easier to interpret. 
+
 
 #There appears to be one anomaly in the DAYS_EMPLOYED Values; a very large positive number. 
 training_set %>%
@@ -77,11 +79,45 @@ testing_set <- testing_set %>%
 
 summary(training_set$DAYS_EMPLOYED)
 
-#Now, let's make these values absolute for interpretation.
+#DAYS_EMPLOYED and DAYS_CREDIT are both negative values, since they are past date - current date. Let's make them absolute values to be easier to interpret. 
 training_set$DAYS_EMPLOYED <- abs(training_set$DAYS_EMPLOYED)
 testing_set$DAYS_EMPLOYED <- abs(testing_set$DAYS_EMPLOYED)
 training_set$DAYS_CREDIT <- abs(training_set$DAYS_CREDIT)
 testing_set$DAYS_CREDIT <- abs(testing_set$DAYS_CREDIT)
+
+#Continuous variable distributions
+training_set %>%
+  ggplot(aes(x=AMT_INCOME_TOTAL)) + geom_density() #right skew
+
+summary(training_set$DAYS_EMPLOYED)
+
+training_set %>%
+  ggplot(aes(x=DAYS_CREDIT)) + geom_density() #left skew
+
+
+#using scale to normalize days_employed variable
+training_set$DAYS_EMPLOYED <- scale(training_set$DAYS_EMPLOYED)
+testing_set$DAYS_EMPLOYED <- scale(testing_set$DAYS_EMPLOYED)
+
+#using scale to normalize days_credit
+training_set$DAYS_CREDIT <- scale(training_set$DAYS_CREDIT)
+testing_set$DAYS_CREDIT <- scale(testing_set$DAYS_CREDIT)
+
+#using scale to normalize AMT_INCOME
+training_set$AMT_INCOME_TOTAL <- log(training_set$AMT_INCOME_TOTAL)
+testing_set$AMT_INCOME_TOTAL <- log(testing_set$AMT_INCOME_TOTAL)
+
+#using scale to normalize AMT_CREDIT
+training_set$AMT_CREDIT <- log(training_set$AMT_CREDIT)
+testing_set$AMT_CREDIT <- log(testing_set$AMT_CREDIT)
+
+#using scale to normalize AMT_ANNUITY
+training_set$AMT_ANNUITY <- log(training_set$AMT_ANNUITY)
+testing_set$AMT_ANNUITY <- log(testing_set$AMT_ANNUITY)
+
+#remove sk_curr_ID to avoid incidentally using it as a predictor
+training_set <- training_set[-c(1)]
+testing_set <- testing_set[-c(1)]
 
 ```
 ## Partitions
@@ -109,6 +145,8 @@ t_test %>%
   group_by(TARGET) %>%
   summarise(percent = n()/nrow(.))
 
+
+
 ```
 
 
@@ -118,35 +156,83 @@ Note from Karson: I didn't sample to address classification bias or standardize 
 
 
 
-
-
 ```{r}
+#up sample target class to address class imbalance
+training_sample <- upSample(t_train, t_train$TARGET)
+
+```
+
+Testing a few nb models out...
+
+
+```{r nb1}
+#laplace smoothing @ value of 1 (default = 0), laplace smooting helps address zero probability issues
+#Using kernel trick to address issue of dimensionality.
+
+nb1 <- naive_bayes(TARGET ~ ., data=t_train, laplace=1, usekernel=T)
+plot(nb1)
+
+nb1_predict_class <- predict(nb1, newdata = t_train)
+cm <- confusionMatrix(data = nb1_predict_class, reference = t_train$TARGET) #this works
+print(cm)
+
+```
+
+
+```{r nb2}
+
+# set up 10-fold cross validation procedure
+ctrl10x <- trainControl(
+  method = "cv", 
+  number = 10
+  )
+
+# train model using caret, 10x cross validation
+nb2 <- train(
+  x = t_train[,2:8],
+  y = t_train$TARGET,
+  method = "nb",
+  trControl = ctrl10x
+  )
+
+nb2_predict_class <- predict(nb2, newdata = t_train)
+
+nb2_predict_test <- predict(nb2, newdata = t_test)
+
+
+cm <- confusionMatrix(data = nb2_predict_class, reference = t_train$TARGET)
+cm_test <- confusionMatrix(data <- nb2_predict_test, reference = t_test$TARGET)
+
+print(cm_test)
 
 
 ```
 
 
+```{r nb3}
+ctrl10x <- trainControl(
+  method = "cv", 
+  number = 10
+  )
 
-```{r}
+# train model using caret, 10x cross validation
+nb3 <- train(
+  x = training_sample[,2:8],
+  y = training_sample$TARGET,
+  method = "nb",
+  trControl = ctrl10x
+  )
 
+nb3_predict_class <- predict(nb3, newdata = training_sample)
+
+nb3_predict_test <- predict(nb3, newdata = t_test)
+
+
+cm <- confusionMatrix(data = nb3_predict_class, reference = training_sample$TARGET)
+cm_test <- confusionMatrix(data <- nb3_predict_test, reference = t_test$TARGET)
+
+print(cm)
+print(cm_test)
 
 ```
 
-
-
-```{r}
-
-
-```
-
-
-```{r}
-
-
-```
-
-
-```{r}
-
-
-```
