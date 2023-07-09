@@ -132,12 +132,13 @@ Changing character columns into factor variables to add as dummy variables into 
 # Select character columns that contain categorical data to turn into factor variables
 columns <- c("NAME_INCOME_TYPE", "NAME_EDUCATION_TYPE")
 
+#/-------> Commented out - redundent section ---------->
 # Loop over the columns selected and convert them to factors
-for (column in columns) {
-  training_set[[column]] <- factor(training_set[[column]])
-}
+#for (column in columns) {
+#  training_set[[column]] <- factor(training_set[[column]])
+#}
 
-str(training_set)
+#str(training_set)
 ```
 
 Create dummy variable for categorical variables
@@ -265,6 +266,15 @@ rf_mod
 ```
 
 <--------------------------Naive Bayes Classification----------------------->
+```{r nb_prep}
+#re-factor TARGET variable
+t_train$TARGET <- as.factor(t_train$TARGET)
+t_test$TARGET <- as.factor(t_test$TARGET)
+training_sample$TARGET <- as.factor(training_sample$TARGET)
+
+
+```
+
 ```{r nb1}
 #laplace smoothing @ value of 1 (default = 0), laplace smooting helps address zero probability issues
 #Using kernel trick to address issue of dimensionality.
@@ -303,6 +313,7 @@ cm_test <- confusionMatrix(data <- nb2_predict_test, reference = t_test$TARGET)
 print(cm_test)
 ```
 
+NB 3 uses upsampling to test effectiveness
 ```{r nb3}
 ctrl10x <- trainControl(
   method = "cv", 
@@ -329,8 +340,4 @@ print(cm)
 print(cm_test)
 
 ```
-
-
-
-
 
