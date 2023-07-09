@@ -2,13 +2,22 @@
 title: "Home Credit EDA Modeling Workbook"
 author: "Group 8: Jade Gosar, Karson Eilers, Paula Soutostefani"
 date: "2023-07-01"
-output: html_document
+output: 
+  html_document:
+    toc:true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 #Warnings disabled because of NB zero probability classification warnings
 ```
+
+#Introduction
+
+TODO: ADD INTRO AND BACKGROUND
+
+
+## SETUP
 
 ```{r packages}
 #install.packages("randomForest")
@@ -23,6 +32,9 @@ library(dplyr)
 library(rpart)
 library(rminer)
 library(randomForest)
+library(pROC)
+library(MASS)
+
 ```
 
 
@@ -345,4 +357,210 @@ print(cm)
 print(cm_test)
 
 ```
+
+
+<---------------------------- Logistic Regression ------------------------->
+
+# Creation of a summary table of conditional TARGET rates by Income Type and Education Type:
+```{r}
+
+t_train %>% 
+  group_by(NAME_INCOME_TYPE, NAME_EDUCATION_TYPE) %>% 
+  summarize(TARGET = sum(TARGET=="1")) %>%
+  arrange(desc(TARGET))
+
+```
+
+
+```{r}
+# Creation of a summary table of conditional TARGET rates by Total Income Amount:
+
+# I need help here in grouping income amounts in maybe 5 different levels and running this by level type. 
+
+t_train %>% 
+  group_by(AMT_INCOME_TOTAL,) %>% 
+  summarize(TARGET = sum(TARGET=="1")) %>%
+  arrange(desc(TARGET))
+
+
+# Creation of a summary table of conditional TARGET rates by Amount Annuity:
+
+t_train %>% 
+  group_by(AMT_ANNUITY,) %>% 
+  summarize(TARGET = sum(TARGET=="1")) %>%
+  arrange(desc(TARGET))
+
+# Creation of a summary table of conditional TARGET rates by Amount Credit:
+
+t_train %>% 
+  group_by(AMT_CREDIT,) %>% 
+  summarize(TARGET = sum(TARGET=="1")) %>%
+  arrange(desc(TARGET))
+
+```
+
+
+
+```{r}
+# Calculating mean of TARGET rate in training and testing sets::
+
+mean(t_train$TARGET==1)
+mean(t_train$TARGET==0)
+
+mean(t_test$TARGET==1)
+mean(t_test$TARGET==0)
+```
+
+In this step I started to create the logistic models and run validation / accuracy in order to identify which of the Logistic Regression Models would work the best in terms of having the strongest predictors of TARGET. I started with fewer predictors and increased one by one comparing the AIC, deviance, accuracy, and ROC Curve.
+
+
+
+
+```{r}
+# Model 1: Simple Logistic Regression Model: Target explained by Total Income Amount:
+
+model1 <- glm(TARGET ~ AMT_INCOME_TOTAL, data = t_train, family = binomial)
+summary(standardize(model1))
+
+invlogit <- function(x) exp(x)/(1 + exp(x))
+
+invlogit(-2.2 + 0.0 * 0) %>%
+  round(2)
+
+#  -2.2  represents  log odds of having issues in payment (TARGET = 1) when Total Income amount = 0 
+
+#  Average Income Amount:
+
+mean(t_train$AMT_INCOME_TOTAL)
+
+# Performing logistic regression of Target explained by Average Total Income Amount:
+
+invlogit <- function(x) exp(x)/(1 + exp(x))
+
+invlogit(-2.2 + 0.0 * 177929.5) %>%
+  round(2)
+
+```
+
+
+```{r}
+# Calculating Deviance for Model1:
+
+glm(TARGET ~ AMT_INCOME_TOTAL, data = t_train, family = binomial)$deviance
+```
+Model1: 
+AIC= 86485 - High AIC as a result of having only one predictor for Model1
+Deviance: 86480.83
+
+```{r}
+# Model2: Simple Logistic Regression Model incorporating more predictors: Target explained by Total Income Amount + Total CREDIT Amount + Total Annuity Amount:
+
+model2 <- glm(TARGET ~ AMT_INCOME_TOTAL + AMT_CREDIT + AMT_ANNUITY, data = t_train, family = binomial)
+summary(standardize(model2))
+
+```
+```{r}
+# Calculating Deviance for Model2:
+
+glm(TARGET ~ AMT_INCOME_TOTAL + AMT_CREDIT + AMT_ANNUITY, data = t_train, family = binomial)$deviance
+```
+
+
+Model2:
+AIC= 86284, which is 201 AIC points less than Model1 (86485), showing that this is a more effective model in predicting the target Variable.
+Deviance = 86275.68
+
+
+
+```{r}
+
+# Model3: Simple Logistic Regression Model incorporating more predictors: Target explained by AMT_INCOME_TOTAL + AMT_CREDIT + AMT_ANNUITY + DAYS_EMPLOYED + DAYS_CREDIT. 
+
+model3 <- glm(TARGET ~ AMT_INCOME_TOTAL + AMT_CREDIT + AMT_ANNUITY + DAYS_EMPLOYED + DAYS_CREDIT, data = t_train, family = binomial)
+summary(standardize(model3))
+
+```
+```{r}
+# Calculating Deviance for Model3:
+
+glm(TARGET ~ AMT_INCOME_TOTAL + AMT_CREDIT + AMT_ANNUITY + DAYS_EMPLOYED + DAYS_CREDIT, data = t_train, family = binomial)$deviance
+```
+
+Model3:
+AIC= 84843, which is 1441 AIC points less than Model2 (86284), and 1642 AIC points less than Model1(86485) - showing that this is a more effective model in predicting the target Variable.
+Deviance: 84831.29
+
+
+
+```{r}
+# Model4:  Logistic Regression Model incorporating more predictors: Target explained by AMT_INCOME_TOTAL + AMT_CREDIT + AMT_ANNUITY + DAYS_EMPLOYED + DAYS_CREDIT + NAME_INCOME_TYPE + NAME_EDUCATION_TYPE. 
+
+model4 <- glm(TARGET ~ AMT_INCOME_TOTAL + AMT_CREDIT + AMT_ANNUITY + DAYS_EMPLOYED + DAYS_CREDIT + NAME_INCOME_TYPE + NAME_EDUCATION_TYPE , data = t_train, family = binomial)
+summary(standardize(model4))
+
+```
+```{r}
+# Calculating Deviance for Model4:
+
+glm(TARGET ~ AMT_INCOME_TOTAL + AMT_CREDIT + AMT_ANNUITY + DAYS_EMPLOYED + DAYS_CREDIT + NAME_INCOME_TYPE + NAME_EDUCATION_TYPE , data = t_train, family = binomial)$deviance
+```
+
+
+Model4:
+AIC= 84133, which is 710 AIC points less than Model3 (84843), and 2151 AIC points less than Model2(86284) - showing that this is a more effective model in predicting the target Variable.
+Deviance: 84101.18
+
+```{r}
+# Creation of Confusion Matrix (predicted/actual) for Model4:
+
+confusionMatrix(ifelse(predict(model4, newdata=t_train, type="response")> .5, 1, 0),
+                t_train$TARGET)
+
+
+```
+
+
+```{r}
+# AUC and Roc Curve for Model4:
+
+library(pROC)
+
+roc(t_train$TARGET, 
+    predict(model4, type = "response"), 
+    plot=T, 
+    add= T,
+    col=2)
+
+```
+
+
+
+```{r}
+# Model4 Residual Plot: Binnedplot:
+
+binnedplot(fitted(model4), 
+           t_train$TARGET - fitted(model4))
+```
+
+
+```{r}
+# Fitting a KNN model of TARGET using the same predictor variables for model4.
+
+set.seed(1234)
+  (knn_model <- train(factor(TARGET) ~ AMT_INCOME_TOTAL + AMT_CREDIT + AMT_ANNUITY + DAYS_EMPLOYED + DAYS_CREDIT + NAME_INCOME_TYPE + NAME_EDUCATION_TYPE, 
+                    data=t_train, 
+                    preProcess=c("center", "scale"),
+                    method="knn"))
+
+AIC(knn_model)
+```
+
+
+
+
+
+
+
+
+
 
