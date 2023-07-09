@@ -6,7 +6,8 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+#Warnings disabled because of NB zero probability classification warnings
 ```
 
 ```{r packages}
@@ -29,11 +30,12 @@ library(randomForest)
 #Imports cleaned training and testing set containing relevant varaibles and no na values
 #see 'data_consolidation_script.R' for full details
 
-#The training set is a product of the application_train.csv set and two values from 
+#The training set is a product of the application_train.csv set and two values from bureau.csv
+# UPDATE - to improve models, more variables have been added.
 training_set <- read_csv('clean_training_data.csv')
-#note - the cleaned training set has 263,480 observations instead fo the 307511 in the origina file
+#note - the updated cleaned training set now has 28 variables and 59,441 observations. Prev file had 263,480 observations instead fo the 307511 in the original file
 testing_set <- read_csv('clean_testing_data.csv')
-#note - the cleaned testing set has 42,299 observations instead of the 48,744
+#note - the cleaned testing set now has 27 variables (everything except for TARGET) and 9,763 observations. Prev file had 42,299 observations instead of the 48,744 in the original data
 
 ```
 ##Observation on cleaning and TARGET value frequency.
@@ -60,8 +62,6 @@ training_set <- training_set %>% mutate(across(where(is.character), as.factor))
 
 #we should factor the Target variable for classification approaches, too.
 training_set$TARGET <- as.factor(training_set$TARGET)
-
-
 
 #There appears to be one anomaly in the DAYS_EMPLOYED Values; a very large positive number. 
 training_set %>%
@@ -102,24 +102,24 @@ training_set %>%
 
 
 #using scale to normalize days_employed variable
-training_set$DAYS_EMPLOYED <- scale(training_set$DAYS_EMPLOYED)
-testing_set$DAYS_EMPLOYED <- scale(testing_set$DAYS_EMPLOYED)
+#training_set$DAYS_EMPLOYED <- scale(training_set$DAYS_EMPLOYED)
+#testing_set$DAYS_EMPLOYED <- scale(testing_set$DAYS_EMPLOYED)
 
 #using scale to normalize days_credit
-training_set$DAYS_CREDIT <- scale(training_set$DAYS_CREDIT)
-testing_set$DAYS_CREDIT <- scale(testing_set$DAYS_CREDIT)
+#training_set$DAYS_CREDIT <- scale(training_set$DAYS_CREDIT)
+#testing_set$DAYS_CREDIT <- scale(testing_set$DAYS_CREDIT)
 
 #using scale to normalize AMT_INCOME
-training_set$AMT_INCOME_TOTAL <- log(training_set$AMT_INCOME_TOTAL)
-testing_set$AMT_INCOME_TOTAL <- log(testing_set$AMT_INCOME_TOTAL)
+#training_set$AMT_INCOME_TOTAL <- log(training_set$AMT_INCOME_TOTAL)
+#testing_set$AMT_INCOME_TOTAL <- log(testing_set$AMT_INCOME_TOTAL)
 
 #using scale to normalize AMT_CREDIT
-training_set$AMT_CREDIT <- log(training_set$AMT_CREDIT)
-testing_set$AMT_CREDIT <- log(testing_set$AMT_CREDIT)
+#training_set$AMT_CREDIT <- log(training_set$AMT_CREDIT)
+#testing_set$AMT_CREDIT <- log(testing_set$AMT_CREDIT)
 
 #using scale to normalize AMT_ANNUITY
-training_set$AMT_ANNUITY <- log(training_set$AMT_ANNUITY)
-testing_set$AMT_ANNUITY <- log(testing_set$AMT_ANNUITY)
+#training_set$AMT_ANNUITY <- log(training_set$AMT_ANNUITY)
+#testing_set$AMT_ANNUITY <- log(testing_set$AMT_ANNUITY)
 
 #remove sk_curr_ID to avoid incidentally using it as a predictor
 training_set <- training_set[-c(1)]
@@ -175,10 +175,15 @@ This code will partition the training set into two: t_train and t_test. We will 
 set.seed(234)
 
 #creates a training subset of the training data with 70% of the data
-t_train_index <- createDataPartition(training_set_w_dummies$TARGET, p = 0.7, list=FALSE)
+t_train_index <- createDataPartition(training_set$TARGET, p = 0.7, list=FALSE)
+t_train_index_dummies <- createDataPartition(training_set_w_dummies$TARGET, p = 0.7, list=FALSE)
 
-t_train <- training_set_w_dummies[t_train_index,]
-t_test <- training_set_w_dummies[-t_train_index,]
+
+t_train <- training_set[t_train_index,]
+t_test <- training_set[-t_train_index,]
+
+t_train_dummies <- training_set_w_dummies[t_train_index,]
+t_test_dummies <- training_set_w_dummies[-t_train_index,]
 
 #check data
 summary(t_train)
@@ -322,7 +327,7 @@ ctrl10x <- trainControl(
 
 # train model using caret, 10x cross validation
 nb3 <- train(
-  x = training_sample[,2:8],
+  x = training_sample[,2:27],
   y = training_sample$TARGET,
   method = "nb",
   trControl = ctrl10x
