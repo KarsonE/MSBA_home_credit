@@ -218,144 +218,7 @@ training_sample <- upSample(t_train, t_train$TARGET)
 
 ```
 
-
-## Decision Trees & Random Forest
-
-<-------------------Decision Trees & Random Forest -------------->
-```{r}
-head(t_train)
-head(t_test)
-dim(t_train)
-dim(t_test)
-```
-
-```{r}
-tree_mod <- rpart(TARGET ~.,
-                  data = t_train[-c(1:2, 6, 9)])
-
-tree_mod
-```
-
-```{r}
-rf_mod_default <- randomForest(TARGET ~.,
-                               data = t_train)
-rf_mod_default
-```
-
-```{r}
-#Evaluate performance against the training dataset and then the test dataset
-rf_def_predict_train <- predict(rf_mod_default, t_train)
-mmetric(t_train$TARGET, rf_def_predict_train, metric = "ACC", "TPR", "PRECISION", "F1")
-```
-
-
-```{r}
-rf_def_predict_test <- predict(rf_mod_default, t_test)
-mmetric(t_test$TARGET, rf_def_predict_test, metric = "ACC", "TPR", "PRECISION", "F1")
-```
-
-
-Plot Error Rate v Number of Trees in random forest
-```{r}
-oob_error <- rf_mod_default$err.rate[,1]
-plot_dat <- cbind.data.frame(rep(1:length(oob_error)), oob_error)
-names(plot_dat) <- c("trees", "oob_error")
-
-g_1 <- ggplot(plot_dat, aes(x = trees, y = oob_error)) +
-  geom_point(alpha = 0.5, color = "blue") +
-  theme_bw() +
-  geom_smooth() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank()) +
-  labs(title = "Error Rate v Number of Trees", x = "Number of Trees", y = "Error Rate")
-```
-
-```{r}
-rf_mod <- randomForest(TARGET ~.,
-                       data = t_train,
-                       ntree = 500)
-
-rf_mod
-```
-
-## Naive Bayes Classification
-```{r nb_prep}
-#re-factor TARGET variable
-t_train$TARGET <- as.factor(t_train$TARGET)
-t_test$TARGET <- as.factor(t_test$TARGET)
-training_sample$TARGET <- as.factor(training_sample$TARGET)
-
-
-```
-
-```{r nb1}
-#laplace smoothing @ value of 1 (default = 0), laplace smooting helps address zero probability issues
-#Using kernel trick to address issue of dimensionality.
-
-nb1 <- naive_bayes(TARGET ~ ., data=t_train, laplace=1, usekernel=T)
-plot(nb1)
-
-nb1_predict_class <- predict(nb1, newdata = t_train)
-cm <- confusionMatrix(data = nb1_predict_class, reference = t_train$TARGET)
-print(cm)
-```
-
-```{r nb2}
-
-# set up 10-fold cross validation procedure
-ctrl10x <- trainControl(
-  method = "cv", 
-  number = 10
-  )
-
-# train model using caret, 10x cross validation
-nb2 <- train(
-  x = t_train[,2:8],
-  y = t_train$TARGET,
-  method = "nb",
-  trControl = ctrl10x
-  )
-
-nb2_predict_class <- predict(nb2, newdata = t_train)
-
-nb2_predict_test <- predict(nb2, newdata = t_test)
-
-cm <- confusionMatrix(data = nb2_predict_class, reference = t_train$TARGET)
-cm_test <- confusionMatrix(data <- nb2_predict_test, reference = t_test$TARGET)
-
-print(cm_test)
-```
-
-NB 3 uses upsampling to test effectiveness
-```{r nb3}
-ctrl10x <- trainControl(
-  method = "cv", 
-  number = 10
-  )
-
-# train model using caret, 10x cross validation
-nb3 <- train(
-  x = training_sample[,2:27],
-  y = training_sample$TARGET,
-  method = "nb",
-  trControl = ctrl10x
-  )
-
-nb3_predict_class <- predict(nb3, newdata = training_sample)
-
-nb3_predict_test <- predict(nb3, newdata = t_test)
-
-
-cm <- confusionMatrix(data = nb3_predict_class, reference = training_sample$TARGET)
-cm_test <- confusionMatrix(data <- nb3_predict_test, reference = t_test$TARGET)
-
-print(cm)
-print(cm_test)
-
-```
-
+<--------------------------Logistic regression-------------------->
 
 ## Logistic Regression
 
@@ -551,6 +414,197 @@ set.seed(1234)
                     method="knn"))
 
 AIC(knn_model)
+```
+
+
+
+
+
+
+<-------------------------------------Naive Bayes--------------------------->
+
+## Naive Bayes Classification
+
+Group 8 chose to include three Naive Bayes models to compare against the logistic and random forest regression models. Naive Bayes models have a reputation for performing relatively well with noisy data, so this different approach might yield effective predictions despite varied data. Naive Bayes classification models may be compatatively sensitive to class imbalance, which is clearly present in these data. The first two models will approach different methods with the existing class imbalance and the third will up-sample the target = 1 class to minimize the effect of te class imbalance. 
+
+```{r nb_prep}
+#factor TARGET variable
+t_train$TARGET <- as.factor(t_train$TARGET)
+t_test$TARGET <- as.factor(t_test$TARGET)
+training_sample$TARGET <- as.factor(training_sample$TARGET)
+```
+
+### NB Model 1
+The first Naive Bayes model employs the naivebayes R package. Because of the very wide distribution of data, we are concerned about a high ratio of zero probability outcomes influencing the predictor. In fact, warnings have been disabled because the caret package identified so many of these outcomes that portion of this Markdown file would be otherwise unreadable. In Naive Bayes models probabilities are calculated in a chain, so a zero probability in one predictor could nullify the input from others. We employ a laplace estimator of 1 to mitiate this problem. 
+
+```{r nb1}
+#creates 1st (baseline) nb model
+nb1 <- naive_bayes(TARGET ~ ., data=t_train, laplace=1, usekernel=T)
+
+#plots probability distributions
+plot(nb1)
+
+#predicted class holds predic values from nb1 model
+nb1_predict_class <- predict(nb1, newdata = t_train)
+nb1_predict_test <- predict(nb1, newdata = t_test)
+
+#creates confusion matrix of predictions on training and testing subsets of training data.
+cm <- confusionMatrix(data = nb1_predict_class, reference = t_train$TARGET)
+cm_test <- confusionMatrix(data <- nb1_predict_test, reference = t_test$TARGET)
+
+#outputs confussion matrices
+print(cm)
+print(cm_test)
+```
+### NB Model 2
+The first model performed well only in measure of accuracy. As the confusion matrices indicate, the model predicted almost zero instances of the minority class. It essentially repeats the majority classifier. This is likely caused by the class imbalance. The second model will use the naivebayes method in caret with cross validation and several different tuning approaches to see whether these problems can be corrected.
+
+
+```{r nb2}
+
+# set up 10-fold cross validation procedure
+ctrl10x <- trainControl(
+  method = "cv", 
+  number = 10
+  )
+
+# Tuning grid (testing aout a variety of possibilities)
+nb_tune_grid <- expand.grid(usekernel = c(TRUE, FALSE),
+                            laplace = c(0, 0.5, 1),
+                            adjust = c(0.75, 1, 1.25, 1.5)
+                            )
+
+# train model using caret. Features include: 10x cross validation to avoid under/over training and a variety of tuning measures. Uses poisson distribution for numeric values which first model used by default. 
+nb2 <- train(
+  x = t_train[,2:27],
+  y = t_train$TARGET,
+  method = "naive_bayes",
+  usepoisson = TRUE,
+  tuneGrid = nb_tune_grid,
+  trControl = ctrl10x
+  )
+
+# final tuning parameters:
+print(nb2$finalModel$tuneValue)
+
+#plots tuning approaches and outcomes. It appears some of the assumptions (including laplace) were not as effective
+plot(nb2)
+
+#model predictions for training subset of training data
+nb2_predict_class <- predict(nb2, newdata = t_train)
+
+#model predictions for testing subset of training data
+nb2_predict_test <- predict(nb2, newdata = t_test)
+
+#confusion matrices for training and testing data respectively
+cm <- confusionMatrix(data = nb2_predict_class, reference = t_train$TARGET)
+cm_test <- confusionMatrix(data <- nb2_predict_test, reference = t_test$TARGET)
+
+#confusion matrix outputs
+print(cm)
+print(cm_test)
+```
+### NB model 3
+
+The second model appears to perform slightly better, based on the non-negative kappa value on the test set, but it is still failing to predict any instances where TARGET = 1. We will need to address the class imbalance directly, using the same model tuning approach. This final NB model will apply the parameters of model 2 to an upsampled training dataset.
+
+```{r nb3}
+# train model using the same caret tuning and cross validation approaches as before
+nb3 <- train(
+  x = training_sample[,2:27],
+  y = training_sample$TARGET,
+  method = "naive_bayes",
+  usepoisson = TRUE,
+  tuneGrid = nb_tune_grid,
+  trControl = ctrl10x
+  )
+
+#class predictions for upsampled training subset of training data
+nb3_predict_class <- predict(nb3, newdata = training_sample)
+
+#class predictions for testing subset of training data
+nb3_predict_test <- predict(nb3, newdata = t_test)
+
+#plots nb3 tuning approaches 
+plot(nb3)
+
+#prints out model 3's final parameters
+print(nb3$finalModel$tuneValue)
+
+#generates confusion matrices for the training and testing predictions
+cm <- confusionMatrix(data = nb3_predict_class, reference = training_sample$TARGET)
+cm_test <- confusionMatrix(data <- nb3_predict_test, reference = t_test$TARGET)
+
+#outputs confusion matrices
+print(cm)
+print(cm_test)
+
+```
+### NB Conclusion
+The final model using upsampled data performed better than the prior two. The accuracy was lower, by the Cohen kappa value improved considerably, particularly for the training set. The outcomes of the testing set were weaker (lower accuracy and much lower kappa value), but this model is still predicting TARGET = 1 in some instances. 
+
+
+
+
+## Decision Trees & Random Forest
+
+<-------------------Decision Trees & Random Forest -------------->
+```{r}
+head(t_train)
+head(t_test)
+dim(t_train)
+dim(t_test)
+```
+
+```{r}
+tree_mod <- rpart(TARGET ~.,
+                  data = t_train[-c(1:2, 6, 9)])
+
+tree_mod
+```
+
+```{r}
+rf_mod_default <- randomForest(TARGET ~.,
+                               data = t_train)
+rf_mod_default
+```
+
+```{r}
+#Evaluate performance against the training dataset and then the test dataset
+rf_def_predict_train <- predict(rf_mod_default, t_train)
+mmetric(t_train$TARGET, rf_def_predict_train, metric = "ACC", "TPR", "PRECISION", "F1")
+```
+
+
+```{r}
+rf_def_predict_test <- predict(rf_mod_default, t_test)
+mmetric(t_test$TARGET, rf_def_predict_test, metric = "ACC", "TPR", "PRECISION", "F1")
+```
+
+
+Plot Error Rate v Number of Trees in random forest
+```{r}
+oob_error <- rf_mod_default$err.rate[,1]
+plot_dat <- cbind.data.frame(rep(1:length(oob_error)), oob_error)
+names(plot_dat) <- c("trees", "oob_error")
+
+g_1 <- ggplot(plot_dat, aes(x = trees, y = oob_error)) +
+  geom_point(alpha = 0.5, color = "blue") +
+  theme_bw() +
+  geom_smooth() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank()) +
+  labs(title = "Error Rate v Number of Trees", x = "Number of Trees", y = "Error Rate")
+```
+
+```{r}
+rf_mod <- randomForest(TARGET ~.,
+                       data = t_train,
+                       ntree = 500)
+
+rf_mod
 ```
 
 
