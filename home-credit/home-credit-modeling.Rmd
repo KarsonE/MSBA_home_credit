@@ -219,9 +219,7 @@ training_sample <- upSample(t_train, t_train$TARGET)
 ```
 
 
-Looks like we are set! 
-Note from Karson: I didn't sample to address classification bias or standardize the values with wide variance like income or loan amount. Tweaks like those may improve your model performance, but I wanted to give you both the options to try different approaches. Feel free to modify the data how you see fit. 
-<-------------------START CODING MODELS HERE--------------->
+## Decision Trees & Random Forest
 
 <-------------------Decision Trees & Random Forest -------------->
 ```{r}
@@ -282,7 +280,7 @@ rf_mod <- randomForest(TARGET ~.,
 rf_mod
 ```
 
-<--------------------------Naive Bayes Classification----------------------->
+## Naive Bayes Classification
 ```{r nb_prep}
 #re-factor TARGET variable
 t_train$TARGET <- as.factor(t_train$TARGET)
@@ -359,7 +357,7 @@ print(cm_test)
 ```
 
 
-<---------------------------- Logistic Regression ------------------------->
+## Logistic Regression
 
 # Creation of a summary table of conditional TARGET rates by Income Type and Education Type:
 ```{r}
