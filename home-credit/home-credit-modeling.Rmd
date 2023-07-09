@@ -16,7 +16,6 @@ knitr::opts_chunk$set(echo = TRUE)
 #load packages
 library(tidyverse)
 library(caret)
-library(nb_models)
 library(naivebayes)
 library(readr)
 library(dplyr)
@@ -150,8 +149,10 @@ dummies <- model.matrix(~ NAME_INCOME_TYPE + NAME_EDUCATION_TYPE + 0, data = tra
 training_set_w_dummies <- cbind(training_set, dummies)
 
 # rename the dummy variable columns
+#ERRORS
 colnames(training_set_w_dummies)[12:22] <- c("Bussinessman", "Commercial_Associate", "Maternity_Leave", "Pensioner", "State_Servant", "Student", "Working_Class", "Higher_Education", "Incomplete_Higher_Education", "Lower_Seconday_Education", "Seconday_Secondary_Special")
 
+#ERRORS
 # check the result
 training_set_w_dummies[,c(6, 9, 12:22)]
 ```
@@ -272,7 +273,7 @@ nb1 <- naive_bayes(TARGET ~ ., data=t_train, laplace=1, usekernel=T)
 plot(nb1)
 
 nb1_predict_class <- predict(nb1, newdata = t_train)
-cm <- confusionMatrix(data = nb1_predict_class, reference = t_train$TARGET) #this works
+cm <- confusionMatrix(data = nb1_predict_class, reference = t_train$TARGET)
 print(cm)
 ```
 
