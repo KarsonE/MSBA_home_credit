@@ -216,6 +216,8 @@ t_test %>%
 #up sample target class to address class imbalance
 training_sample <- upSample(t_train, t_train$TARGET)
 
+
+
 ```
 
 <--------------------------Logistic regression-------------------->
@@ -558,7 +560,7 @@ dim(t_test)
 
 ```{r}
 tree_mod <- rpart(TARGET ~.,
-                  data = t_train[-c(1:2, 6, 9)])
+                  data = t_train[-c(2, 6, 9)])
 
 tree_mod
 ```
